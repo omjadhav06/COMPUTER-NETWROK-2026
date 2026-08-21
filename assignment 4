@@ -1,0 +1,68 @@
+INF = float('inf')
+
+nodes = ['A', 'B', 'C', 'D']
+
+graph = {
+    'A': {'A': 0, 'B': 2, 'C': 5, 'D': INF},
+    'B': {'A': 2, 'B': 0, 'C': 1, 'D': 4},
+    'C': {'A': 5, 'B': 1, 'C': 0, 'D': 2},
+    'D': {'A': INF, 'B': 4, 'C': 2, 'D': 0}
+}
+
+tables = {}
+for src in nodes:
+    tables[src] = {}
+    for dest in nodes:
+        cost = graph[src][dest]
+        if cost != INF and src != dest:
+            tables[src][dest] = [cost, dest]
+        elif src == dest:
+            tables[src][dest] = [0, src]
+        else:
+            tables[src][dest] = [INF, '-']
+
+def display_tables(step):
+    print(f"\n================ STEP {step} ================")
+    for src in nodes:
+        print(f"Routing Table for Node {src}:")
+        print("Dest\tCost\tNext Hop")
+        for dest in nodes:
+            cost, nxt = tables[src][dest]
+            cost_str = "INF" if cost == INF else str(cost)
+            print(f"{dest}\t{cost_str}\t{nxt}")
+        print("-" * 30)
+
+display_tables(0)
+
+converged = False
+step = 1
+
+while not converged:
+    converged = True
+    current_vectors = {src: {dest: tables[src][dest][0] for dest in nodes} for src in nodes}
+    
+    for src in nodes:
+        for dest in nodes:
+            if src == dest:
+                continue
+            
+            old_cost = tables[src][dest][0]
+            min_cost = old_cost
+            best_hop = tables[src][dest][1]
+            
+            for neighbor in graph[src]:
+                if graph[src][neighbor] != INF and neighbor != src:
+                    cost_to_neighbor = graph[src][neighbor]
+                    cost_from_neighbor_to_dest = current_vectors[neighbor][dest]
+                    total_cost = cost_to_neighbor + cost_from_neighbor_to_dest
+                    
+                    if total_cost < min_cost:
+                        min_cost = total_cost
+                        best_hop = neighbor
+                        
+            if min_cost < old_cost:
+                tables[src][dest] = [min_cost, best_hop]
+                converged = False
+                
+    display_tables(step)
+    step += 1
